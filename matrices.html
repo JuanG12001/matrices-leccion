@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Matrices en Python</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: una columna de cuaderno (máx. 920px) con pestañas fijas arriba; en "Aprende", índice de lecciones a la izquierda en pantallas anchas.
+   Motivo: la cuadrícula de la matriz; el resaltador amarillo marca la celda que se está mirando y el azul de bolígrafo es el acento. */
+:root{
+  --bg:#f6f7fa; --surface:#ffffff; --ink:#1b2130; --muted:#5b6578; --line:#dce1ea; --soft:#eef1f6; --out:#e7ebf2;
+  --accent:#2f4fd1; --accent-ink:#ffffff; --accent-soft:#e7ecff;
+  --mark:#ffd84a; --mark-soft:#fff3bf; --mark-ink:#1b2130;
+  --ok:#17804a; --ok-soft:#ddf2e6; --bad:#c23b2b; --bad-soft:#fbe4e0;
+  --kw:#7b3fc4; --str:#16794a; --num:#b4530f; --com:#8a93a6;
+  --f-display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11141b; --surface:#181c26; --ink:#e8ebf3; --muted:#9ca5b8; --line:#2c3344; --soft:#1f2431; --out:#262c3b;
+  --accent:#8fa2ff; --accent-ink:#11141b; --accent-soft:#232b4e;
+  --mark:#f2cd3f; --mark-soft:#3a3418; --mark-ink:#1b2130;
+  --ok:#52c98b; --ok-soft:#153021; --bad:#ff8b7b; --bad-soft:#3b1e1a;
+  --kw:#c39bff; --str:#7bd6a4; --num:#f5a66c; --com:#7d869a; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#11141b; --surface:#181c26; --ink:#e8ebf3; --muted:#9ca5b8; --line:#2c3344; --soft:#1f2431; --out:#262c3b;
+  --accent:#8fa2ff; --accent-ink:#11141b; --accent-soft:#232b4e;
+  --mark:#f2cd3f; --mark-soft:#3a3418; --mark-ink:#1b2130;
+  --ok:#52c98b; --ok-soft:#153021; --bad:#ff8b7b; --bad-soft:#3b1e1a;
+  --kw:#c39bff; --str:#7bd6a4; --num:#f5a66c; --com:#7d869a; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{background:var(--bg)}
+body{color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.6;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+h1,h2,h3,h4{font-family:var(--f-display);line-height:1.15;margin:0;text-wrap:balance;letter-spacing:-.01em}
+p{margin:0}
+button,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+code{font-family:var(--f-mono);font-size:.86em;background:var(--soft);border:1px solid var(--line);border-radius:5px;padding:.04em .32em;overflow-wrap:anywhere}
+strong{font-weight:700}
+
+.wrap{max-width:920px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-block:10px}
+.marca{display:flex;align-items:center;gap:10px;margin-right:auto;min-width:0}
+.logo{display:grid;grid-template-columns:repeat(3,8px);gap:2px;flex:none}
+.logo i{width:8px;height:8px;border-radius:2px;background:var(--line)}
+.logo i.on{background:var(--mark)}
+.marca h1{font-size:1.2rem}
+.marca p{font-size:.8rem;color:var(--muted);line-height:1.3}
+.tabs{display:flex;gap:4px;background:var(--soft);border-radius:10px;padding:3px}
+.tabs button{border:0;background:none;padding:6px 14px;border-radius:8px;color:var(--muted);font-weight:700;font-size:.95rem}
+.tabs button[aria-current="page"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+
+main{padding-block:28px 64px}
+.intro{display:grid;gap:6px;margin-bottom:22px;max-width:62ch}
+.intro h2{font-size:clamp(1.6rem,4vw,2.2rem)}
+.intro p{color:var(--muted)}
+
+/* Aprende */
+.aprende{display:grid;gap:24px;grid-template-columns:minmax(0,1fr)}
+.indice{min-width:0}
+@media (min-width:860px){.aprende{grid-template-columns:220px minmax(0,1fr);align-items:start}.indice{position:sticky;top:calc(env(safe-area-inset-top,0px) + 76px)}}
+.indice ol{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+@media (max-width:859px){.indice ol{display:flex;overflow-x:auto;gap:6px;padding-bottom:4px}.indice li{flex:none}}
+.indice button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:1px solid transparent;background:none;border-radius:10px;padding:8px 10px;color:var(--muted);font-weight:700;font-size:.95rem}
+.indice button .n{flex:none;width:26px;height:26px;border-radius:7px;display:grid;place-items:center;background:var(--soft);color:var(--muted);font-family:var(--f-display);font-size:.9rem}
+.indice button[aria-current="true"]{background:var(--surface);border-color:var(--line);color:var(--ink)}
+.indice button[aria-current="true"] .n{background:var(--accent);color:var(--accent-ink)}
+.indice button.hecho .n{background:var(--ok-soft);color:var(--ok)}
+.leccion{min-width:0;display:grid;gap:18px}
+.leccion > h2{font-size:clamp(1.5rem,3.6vw,2rem)}
+.leccion .eti{font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.leccion h3{font-size:1.2rem;margin-top:10px}
+.leccion > p,.leccion > ul{max-width:66ch}
+.leccion ul{margin:0;padding-left:1.15em;display:grid;gap:6px}
+
+pre.code{margin:0;background:var(--soft);border:1px solid var(--line);border-radius:12px 12px 0 0;padding:12px 14px;overflow-x:auto;font-family:var(--f-mono);font-size:.84rem;line-height:1.6;tab-size:4}
+pre.code.solo{border-radius:12px}
+pre.code code{background:none;border:0;padding:0;font-size:inherit}
+.k{color:var(--kw);font-weight:600}.s{color:var(--str)}.nu{color:var(--num)}.c{color:var(--com);font-style:italic}
+.bloque-code{display:grid;min-width:0}
+.bloque-code .tit{font-size:.82rem;font-weight:700;color:var(--muted);margin-bottom:6px}
+.usa{font-weight:400;font-size:.85rem;color:var(--muted)}
+.salida{background:var(--out);border:1px solid var(--line);border-top:0;border-radius:0 0 12px 12px;padding:8px 14px 10px;min-width:0}
+.salida .lab{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.salida pre{margin:2px 0 0;font-family:var(--f-mono);font-size:.84rem;line-height:1.55;white-space:pre;overflow-x:auto}
+.ojo{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;background:var(--mark-soft);border-radius:12px;padding:12px 14px;max-width:70ch}
+.ojo b{font-family:var(--f-display);font-size:.95rem}
+.ojo .ic{width:22px;height:22px;border-radius:6px;background:var(--mark);color:var(--mark-ink);display:grid;place-items:center;font-weight:700;font-family:var(--f-display)}
+.tabla{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.tabla table{border-collapse:collapse;width:100%;font-size:.92rem;min-width:560px}
+.tabla th,.tabla td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.tabla tr:last-child td{border-bottom:0}
+.tabla th{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.nota{background:var(--surface);border:1px dashed var(--accent);border-radius:12px;padding:14px 16px;display:grid;gap:10px;max-width:70ch}
+.formula{display:flex;justify-content:center;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;font-family:"Times New Roman",Georgia,serif;font-size:1.35rem;overflow-x:auto}
+.formula .raiz{display:inline-flex;align-items:stretch}
+.formula .sig{font-size:2.2rem;line-height:1;align-self:center}
+.formula .bajo{border-top:2px solid var(--ink);display:inline-flex;align-items:center;padding:4px 6px 0}
+.formula .frac{display:inline-grid;text-align:center;margin:0 4px}
+.formula .frac span:first-child{border-bottom:1.5px solid var(--ink);padding:0 6px 2px}
+.formula sub,.formula sup{font-size:.6em}
+
+/* widgets */
+.widget{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:14px;min-width:0}
+.widget .wt{font-family:var(--f-display);font-size:1.02rem}
+.widget .ayuda{font-size:.9rem;color:var(--muted)}
+.fila-ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{border:0;border-radius:10px;padding:9px 16px;font-weight:700;background:var(--accent);color:var(--accent-ink);display:inline-flex;align-items:center;gap:6px}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.sec{background:var(--soft);color:var(--ink);border:1px solid var(--line)}
+.btn.ok{background:var(--ok);color:var(--accent-ink)}
+.btn.chico{padding:6px 12px;font-size:.9rem}
+select{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 8px}
+.lectura{font-family:var(--f-mono);font-size:.92rem;background:var(--soft);border-radius:10px;padding:10px 12px;min-height:2.6em;overflow-wrap:anywhere}
+.vars{display:flex;flex-wrap:wrap;gap:8px}
+.vars span{font-family:var(--f-mono);font-size:.88rem;background:var(--soft);border-radius:8px;padding:4px 10px}
+.vars b{color:var(--accent)}
+
+.matriz{display:inline-grid;gap:4px;font-variant-numeric:tabular-nums;max-width:100%}
+.matriz .lbl{font-family:var(--f-mono);font-size:.72rem;color:var(--muted);display:grid;place-items:center;border:0;background:none;padding:0;min-height:22px}
+button.lbl:hover{color:var(--accent)}
+.matriz .lbl.on{color:var(--accent);font-weight:700}
+.celda{width:clamp(36px,9vw,52px);height:clamp(36px,9vw,52px);border:1.5px solid var(--line);border-radius:9px;background:var(--surface);display:grid;place-items:center;font-family:var(--f-mono);font-weight:600;font-size:clamp(.8rem,2.6vw,.98rem);color:var(--ink);padding:0;transition:background .15s,border-color .15s,transform .1s}
+button.celda:hover{border-color:var(--accent)}
+.celda.tinte{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 30%,var(--line))}
+.celda.visto{background:var(--soft);color:var(--muted)}
+.celda.sel{background:var(--mark);border-color:var(--mark);color:var(--mark-ink)}
+.celda.max{outline:2px solid var(--accent);outline-offset:1px}
+.celda.ok{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.celda.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--bad);animation:sacude .3s}
+.celda.vacia{color:transparent}
+.celda.pista{border-color:var(--mark);border-style:dashed}
+@keyframes sacude{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.ecu{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.ecu .op{font-family:var(--f-display);font-size:1.5rem;color:var(--muted)}
+.ecu figure{margin:0;display:grid;gap:4px;justify-items:center}
+.ecu figcaption{font-family:var(--f-mono);font-size:.8rem;color:var(--muted)}
+
+.notas-t{overflow-x:auto}
+.notas-t table{border-collapse:separate;border-spacing:3px;font-variant-numeric:tabular-nums;font-family:var(--f-mono);font-size:.88rem}
+.notas-t th,.notas-t td{padding:6px 9px;border-radius:7px;text-align:right;white-space:nowrap}
+.notas-t th{font-family:var(--f-body);font-size:.8rem;color:var(--muted)}
+.notas-t th button,.notas-t td button{border:0;background:none;padding:0;font:inherit;color:inherit}
+.notas-t td.n{background:var(--soft)}
+.notas-t td.res{color:var(--accent);font-weight:600}
+.notas-t .on{background:var(--mark)!important;color:var(--mark-ink)!important}
+.notas-t .tin{background:var(--mark-soft)!important}
+.barras{display:grid;grid-template-columns:repeat(20,minmax(0,1fr));gap:3px;align-items:end;height:120px}
+.barras div{background:var(--accent);border-radius:3px 3px 0 0;min-height:2px}
+.barras-eje{display:grid;grid-template-columns:repeat(20,minmax(0,1fr));gap:3px;font-family:var(--f-mono);font-size:.62rem;color:var(--muted);text-align:center}
+
+/* preguntas */
+.preg{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px;min-width:0}
+.preg .q{font-weight:700}
+.ops{display:grid;gap:8px}
+.ops.salidas{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.op-b{display:flex;gap:10px;align-items:flex-start;text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:11px;padding:10px 12px;min-width:0}
+.op-b:hover:not(:disabled){border-color:var(--accent)}
+.op-b[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.op-b.ok{border-color:var(--ok);background:var(--ok-soft)}
+.op-b.bad{border-color:var(--bad);background:var(--bad-soft)}
+.op-b:disabled{cursor:default}
+.op-b .v{min-width:0}
+.op-b .v.mono{font-family:var(--f-mono);font-size:.86rem;white-space:pre-wrap;overflow-wrap:anywhere}
+.fichas{display:flex;flex-wrap:wrap;gap:8px}
+.ficha{font-family:var(--f-mono);font-size:.9rem;font-weight:600;background:var(--surface);border:1.5px solid var(--line);border-radius:9px;padding:7px 12px;max-width:100%;overflow-wrap:anywhere;text-align:left}
+.ficha[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.hueco{display:inline-block;min-width:3em;padding:0 .35em;border-bottom:2.5px solid var(--accent);background:var(--accent-soft);border-radius:5px 5px 0 0;text-align:center}
+.hueco.vacio{color:transparent}
+.hueco.ok{border-color:var(--ok);background:var(--ok-soft)}
+.hueco.bad{border-color:var(--bad);background:var(--bad-soft)}
+.fb{border-radius:11px;padding:10px 12px;display:grid;gap:6px}
+.fb.ok{background:var(--ok-soft)}.fb.bad{background:var(--bad-soft)}
+.fb h4{font-size:1rem}
+.fb.ok h4{color:var(--ok)}.fb.bad h4{color:var(--bad)}
+.fb pre{margin:0;font-family:var(--f-mono);font-size:.84rem;background:var(--surface);border-radius:8px;padding:6px 10px;overflow-x:auto}
+.zona-t{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.prog,.banco{display:grid;gap:6px;min-height:44px;padding:8px;border-radius:11px}
+.prog{background:var(--soft);border:1.5px dashed var(--line)}
+.banco{border:1px solid var(--line)}
+.blq{display:flex;align-items:flex-start;width:100%;text-align:left;border:1.5px solid var(--line);background:var(--surface);border-radius:9px;padding:6px 10px;font-family:var(--f-mono);font-size:.8rem}
+.blq .ind{flex:none;align-self:stretch;width:calc(var(--n) * 1.1em);background:repeating-linear-gradient(90deg,var(--line) 0 2px,transparent 2px 1.1em)}
+.blq .bt{min-width:0;flex:1;white-space:pre-wrap;overflow-wrap:anywhere}
+.blq.ok{border-color:var(--ok)}.blq.bad{border-color:var(--bad);background:var(--bad-soft)}
+.vacio-t{color:var(--muted);font-size:.88rem}
+.chequeo{display:grid;gap:12px}
+.navlec{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:6px}
+
+/* juegos y examen */
+.tarjetas{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.tarj{display:grid;gap:8px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.tarj:hover{border-color:var(--accent)}
+.tarj h3{font-size:1.1rem}
+.tarj p{font-size:.92rem;color:var(--muted)}
+.tarj .rec{font-size:.82rem;color:var(--accent);font-weight:700}
+.mini{display:grid;grid-template-columns:repeat(4,10px);gap:2px}
+.mini i{width:10px;height:10px;border-radius:2px;background:var(--line)}
+.mini i.on{background:var(--mark)}.mini i.az{background:var(--accent)}
+.juego{display:grid;gap:16px;justify-items:start}
+.juego > *{max-width:100%}
+.marcador{display:flex;flex-wrap:wrap;gap:8px;align-items:center;width:100%}
+.marcador .pill{font-size:.85rem;font-weight:700;background:var(--soft);border-radius:999px;padding:4px 12px;font-variant-numeric:tabular-nums}
+.marcador .esp{margin-left:auto}
+.consigna{font-family:var(--f-display);font-size:1.25rem}
+.consigna code{font-size:.95em}
+.barra{height:6px;background:var(--soft);border-radius:999px;overflow:hidden;width:100%}
+.barra i{display:block;height:100%;background:var(--accent);border-radius:999px;transition:width .3s}
+.final{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;display:grid;gap:10px;justify-items:start;width:100%}
+.final .grande{font-family:var(--f-display);font-size:3rem;line-height:1}
+.final .grande small{font-size:1.2rem;color:var(--muted)}
+.ejercicios{display:grid;gap:12px;margin-top:34px}
+.ejer{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:10px;min-width:0}
+.ejer .fu{font-size:.8rem;color:var(--muted);font-weight:700}
+.ejer details summary{cursor:pointer;font-weight:700;color:var(--accent)}
+.ejer details > div{margin-top:8px;display:grid;gap:8px}
+.ejer .esperada{font-family:var(--f-mono);font-size:.84rem;background:var(--out);border-radius:10px;padding:8px 12px;white-space:pre;overflow-x:auto;margin:0}
+.copiar{justify-self:start}
+.leccion,.preg,.widget,.chequeo,.juego,.ejer,.final,.ejer details > div{grid-template-columns:minmax(0,1fr)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="marca">
+      <div class="logo" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i></div>
+      <div><h1>Matrices en Python</h1><p>Clases del 26 y 27 de octubre · Programación</p></div>
+    </div>
+    <nav class="tabs" aria-label="Secciones">
+      <button type="button" data-ir="aprende">Aprende</button>
+      <button type="button" data-ir="juegos">Juegos</button>
+      <button type="button" data-ir="examen">Examen</button>
+    </nav>
+  </div>
+</header>
+<main class="wrap" id="vista"></main>
+
+<script>
+const DATA = {"lecciones":[{"id":"matriz","titulo":"¿Qué es una matriz?","corto":"Qué es","bloques":[{"tipo":"p","texto":"Una matriz es una **tabla de números**. Tiene **filas** (acostadas, de izquierda a derecha) y **columnas** (paradas, de arriba hacia abajo)."},{"tipo":"p","texto":"En Python se escribe como una **lista de listas**. Cada lista de adentro es una fila. Así está en tu cuaderno:"},{"tipo":"code","code":"matrix = [[1, 2, 3],\n          [4, 5, 6],\n          [7, 8, 9]]\nprint(matrix)","entrada":"","titulo":null,"error_ok":false,"usa":"","salida":"[[1, 2, 3], [4, 5, 6], [7, 8, 9]]"},{"tipo":"widget","w":"explorar"},{"tipo":"h","texto":"Cómo se busca un número"},{"tipo":"p","texto":"Es como la batalla naval: das dos números. **Primero la fila, después la columna.** Y los dos se cuentan **desde 0**."},{"tipo":"code","code":"matrix = [[1, 2, 3],\n          [4, 5, 6],\n          [7, 8, 9]]\nprint(matrix[1][2])","entrada":"","titulo":"El ejemplo de tu cuaderno","error_ok":false,"usa":"","salida":"6"},{"tipo":"lista","items":["`matrix[1]` es la fila 1. Como se cuenta desde 0, es la segunda: `[4, 5, 6]`.","De esa fila, la posición 2 (la tercera) es el **6**."]},{"tipo":"h","texto":"El tamaño"},{"tipo":"code","code":"matrix = [[1, 2, 3],\n          [4, 5, 6],\n          [7, 8, 9]]\nprint(len(matrix))\nprint(len(matrix[0]))","entrada":"","titulo":null,"error_ok":false,"usa":"","salida":"3\n3"},{"tipo":"lista","items":["`len(matrix)` = cuántas filas tiene.","`len(matrix[0])` = cuántas columnas (el largo de la primera fila)."]},{"tipo":"ojo","texto":"En tu cuaderno dibujaste una tabla 1 4 / 2 5 / 3 6. En Python cada lista es una fila **acostada**: `[1, 2, 3]` va arriba, de izquierda a derecha."}],"chequeo":[{"t":"salida","q":"¿Qué aparece en la pantalla?","code":"m = [[5, 8],\n     [3, 9]]\nprint(m[1][0])","ops":["8","5","9"],"exp":"Fila 1 (la de abajo: `[3, 9]`), columna 0 (la primera): 3.","usa":"","correcta":"3"},{"t":"elige","q":"Una matriz tiene 3 filas y 5 columnas. ¿Cuánto da `len(m)`?","ops":["3","5","15"],"exp":"`len(m)` cuenta las filas: 3. Las columnas se cuentan con `len(m[0])`.","code":null}]},{"id":"recorrer","titulo":"Recorrer la matriz con dos for","corto":"Recorrer","bloques":[{"tipo":"p","texto":"Para pasar por todas las casillas se usan **dos for, uno dentro del otro**. Es como leer un libro: el for de afuera baja de línea en línea (las filas) y el de adentro lee cada línea de izquierda a derecha (las columnas)."},{"tipo":"code","code":"m = [[1, 2, 3],\n     [4, 5, 6]]\n\nfor i in range(len(m)):          # i = fila\n    for j in range(len(m[0])):   # j = columna\n        print(m[i][j], end=\" \")\n    print(\"\")","entrada":"","titulo":"Mostrar la matriz (presenta_matrix de la clase)","error_ok":false,"usa":"","salida":"1 2 3\n4 5 6"},{"tipo":"lista","items":["`end=\" \"` hace que los números de una fila salgan uno al lado del otro.","`print(\"\")` va fuera del for de adentro: cuando termina una fila, salta a la línea de abajo."]},{"tipo":"h","texto":"Buscar el número más grande"},{"tipo":"p","texto":"Es el ejemplo del profe. La idea: «el mayor es el primero» (`m[0][0]`) y después se revisa casilla por casilla. Si aparece uno más grande, ese pasa a ser el mayor."},{"tipo":"widget","w":"recorrer"},{"tipo":"code","code":"matrix = [[2, 10, 19, 61],\n          [21, 13, 35, 2],\n          [61, 71, 56, 4],\n          [47, 85, 61, 19]]\n\ndef maximo_matrix(m):\n    maximo = m[0][0]\n    for i in range(len(m)):\n        for j in range(len(m[0])):\n            if maximo < m[i][j]:\n                maximo = m[i][j]\n    return maximo\n\nprint(maximo_matrix(matrix))","entrada":"","titulo":"maximo_matrix","error_ok":false,"usa":"","salida":"85"}],"chequeo":[{"t":"salida","q":"¿Qué aparece en la pantalla?","code":"m = [[1, 2],\n     [3, 4]]\nfor i in range(len(m)):\n    for j in range(len(m[0])):\n        print(m[i][j], end=\" \")\n    print(\"\")","ops":["1 3\n2 4","1\n2\n3\n4","1 2 3 4"],"exp":"Cada fila sale en su línea: primero 1 2, salta de línea, después 3 4.","usa":"","correcta":"1 2\n3 4"},{"t":"completa","q":"¿Con qué empieza el mayor?","code":"m = [[4, 9],\n     [7, 2]]\nmaximo = ___\nfor i in range(len(m)):\n    for j in range(len(m[0])):\n        if maximo < m[i][j]:\n            maximo = m[i][j]\nprint(maximo)","ops":["m[0][0]","m[0]","m"],"exp":"Se empieza con la primera casilla, `m[0][0]`. `m[0]` es una fila entera y `m` la matriz entera: no se pueden comparar con un número.","salida":"9"}]},{"id":"crear","titulo":"Crear una matriz y sumar dos","corto":"Crear y sumar","bloques":[{"tipo":"p","texto":"`crea_matrix(filas, columnas)` hace una matriz **llena de ceros**. Sirve para tener dónde guardar un resultado."},{"tipo":"code","code":"def crea_matrix(numeroFilas, numeroColumnas):\n    matrix = []\n    for i in range(numeroFilas):\n        matrix.append([])\n        for j in range(numeroColumnas):\n            matrix[i].append(0)\n    return matrix\n\nprint(crea_matrix(2, 3))","entrada":"","titulo":"crea_matrix de la clase","error_ok":false,"usa":"","salida":"[[0, 0, 0], [0, 0, 0]]"},{"tipo":"lista","items":["Empieza con una lista vacía: `matrix = []`.","Por cada fila agrega una lista vacía: `matrix.append([])`.","Y a esa fila le pone un 0 por cada columna: `matrix[i].append(0)`."]},{"tipo":"h","texto":"Sumar dos matrices"},{"tipo":"p","texto":"Se suma **casilla con casilla**: la de la misma fila y la misma columna. Solo se puede si las dos matrices tienen **el mismo tamaño**. Por eso la función lo revisa primero."},{"tipo":"widget","w":"suma"},{"tipo":"code","code":"def suma_matriz(a, b):\n    if len(a) == len(b) and len(a[0]) == len(b[0]):\n        c = crea_matrix(len(a), len(a[0]))\n        for i in range(len(a)):\n            for j in range(len(a[0])):\n                c[i][j] = a[i][j] + b[i][j]\n    else:\n        return \"LOS DATOS SUMINISTRADOS NO SON CORRECTOS\"\n    return c\n\nm1 = [[1, 2], [3, 4]]\nm2 = [[10, 11], [12, 13]]\nprint(suma_matriz(m1, m2))","entrada":"","titulo":"suma_matriz de la clase","error_ok":false,"usa":"crea_matrix","salida":"[[11, 13], [15, 17]]"},{"tipo":"ojo","texto":"En tu código hay una línea que sobra: `matrix[i].append(c[i][j])`. Bórrala, el resultado ya queda en `c`. Y el mensaje que te salió en vertical fue porque `m1` tenía 3 filas y `m2` 2: la función devolvió el texto del error y `presenta_matrix` lo imprimió letra por letra."}],"chequeo":[{"t":"elige","q":"¿Se puede sumar una matriz de 3 filas con una de 2 filas?","ops":["No: devuelve «LOS DATOS SUMINISTRADOS NO SON CORRECTOS»","Sí, da una de 3 filas","Sí, da una de 2 filas"],"exp":"Para sumar casilla con casilla las dos deben tener las mismas filas y columnas.","code":null},{"t":"salida","q":"¿Qué aparece en la pantalla?","code":"print(suma_matriz([[1, 2]], [[5, 5]]))","ops":["[[1, 2, 5, 5]]","[[5, 10]]","[[1, 2], [5, 5]]"],"exp":"1 + 5 = 6 y 2 + 5 = 7.","usa":"suma_matriz de la clase","correcta":"[[6, 7]]"}]},{"id":"zigzag","titulo":"Llenar en zigzag","corto":"Zigzag","bloques":[{"tipo":"p","texto":"Un contador `k` va 1, 2, 3… y cada número se escribe en la matriz **como una serpiente**: la fila 0 de izquierda a derecha, la fila 1 de derecha a izquierda, la fila 2 otra vez de izquierda a derecha, y así."},{"tipo":"widget","w":"zigzag"},{"tipo":"code","code":"def zig_zag(n, m):\n    c = crea_matrix(n, m)\n    k = 0\n    for i in range(0, n, 2):           # filas pares\n        for j in range(m):\n            k += 1\n            c[i][j] = k\n        if i + 1 != n:\n            for j in range(m - 1, -1, -1):  # filas impares\n                k += 1\n                c[i + 1][j] = k\n    return c\n\npresenta_matrix(zig_zag(4, 5))","entrada":"","titulo":"zig_zag de la clase","error_ok":false,"usa":"crea_matrix y presenta_matrix","salida":"1 2 3 4 5\n10 9 8 7 6\n11 12 13 14 15\n20 19 18 17 16"},{"tipo":"lista","items":["`range(0, n, 2)` salta de 2 en 2: las filas 0, 2, 4…","En la misma vuelta llena también la fila de abajo, `i + 1`, pero al revés.","`range(m - 1, -1, -1)` cuenta hacia atrás: 4, 3, 2, 1, 0.","`if i + 1 != n` es para no salirse cuando la última fila no tiene otra debajo."]},{"tipo":"ojo","texto":"La otra versión que copiaste, `zig_zag_2`, llena una fila de arriba y una de abajo, cerrando hacia el centro. Con filas impares (5×5) la del medio queda en 0. Puedes verla en el selector de arriba."}],"chequeo":[{"t":"salida","q":"¿Qué aparece en la pantalla?","code":"for j in range(3, -1, -1):\n    print(j, end=\" \")","ops":["3 2 1","0 1 2 3","3 2 1 0 -1"],"exp":"Cuenta hacia atrás desde 3 y llega hasta 0. El −1 es el tope: no se incluye.","usa":"","correcta":"3 2 1 0"},{"t":"salida","q":"¿Qué aparece en la pantalla?","code":"presenta_matrix(zig_zag(3, 3))","ops":["1 2 3\n4 5 6\n7 8 9","1 2 3\n6 5 4\n9 8 7","3 2 1\n4 5 6\n9 8 7"],"exp":"Fila 0: 1 2 3. Fila 1 al revés: el 4 queda a la derecha. Fila 2 otra vez normal: 7 8 9.","usa":"zig_zag de la clase","correcta":"1 2 3\n6 5 4\n7 8 9"}]},{"id":"notas","titulo":"La matriz de notas","corto":"Notas","bloques":[{"tipo":"p","texto":"Clase del martes. **Cada fila es un estudiante** y **cada columna es una evaluación** (P1, P2, P3, P4). Toca un estudiante o una evaluación para ver qué se suma:"},{"tipo":"widget","w":"notas"},{"tipo":"lista","items":["Promedio de **un estudiante**: se suma su **fila** y se divide entre 4 (las evaluaciones).","Promedio de **una evaluación**: se suma su **columna** y se divide entre 5 (los estudiantes)."]},{"tipo":"code","code":"def promedio_estudiante(matriz):     # sumar FILAS\n    promedios = []\n    for i in range(len(matriz)):\n        suma = 0\n        for j in range(len(matriz[0])):\n            suma += matriz[i][j]\n        promedios.append(suma / len(matriz[0]))\n    return promedios\n\nprint(promedio_estudiante(notas))","entrada":"","titulo":"Promedio de cada estudiante (sumar filas)","error_ok":false,"usa":"la matriz de notas de la tabla","salida":"[9.75, 13.0, 11.0, 16.5, 10.0]"},{"tipo":"code","code":"def promedio_notas(matriz):          # sumar COLUMNAS\n    promedios = []\n    for c in range(len(matriz[0])):\n        suma = 0\n        for f in range(len(matriz)):\n            suma += matriz[f][c]\n        promedios.append(suma / len(matriz))\n    return promedios\n\nprint(promedio_notas(notas))","entrada":"","titulo":"Promedio de cada evaluación (sumar columnas)","error_ok":false,"usa":"la matriz de notas de la tabla","salida":"[10.0, 11.8, 12.0, 14.4]"},{"tipo":"p","texto":"Fíjate en la diferencia: para las filas, el for de **afuera** es el de las filas. Para las columnas, el de **afuera** es el de las columnas."},{"tipo":"h","texto":"Desviación estándar"},{"tipo":"p","texto":"Dice **qué tan lejos están las notas de su promedio**. Si todos sacaron parecido, sale pequeña. Si hay notas muy altas y muy bajas, sale grande. La fórmula de la pizarra:"},{"tipo":"formula"},{"tipo":"p","texto":"Paso a paso con tres notas: 4, 8 y 6."},{"tipo":"lista","items":["1. El promedio: (4 + 8 + 6) / 3 = **6**.","2. A cada nota réstale el promedio y eleva al cuadrado: (4 − 6)² = 4, (8 − 6)² = 4, (6 − 6)² = 0.","3. Suma todo: 4 + 4 + 0 = **8**.","4. Divide entre n − 1 (3 − 1 = 2): 8 / 2 = **4**.","5. Saca la raíz: √4 = **2**. Esa es la desviación."]},{"tipo":"code","code":"import math\n\ndef desviacion_notas(matriz):\n    promedios = promedio_notas(matriz)\n    n = len(matriz)\n    desviaciones = []\n    for c in range(len(matriz[0])):\n        s = 0\n        for f in range(n):\n            s += (matriz[f][c] - promedios[c]) ** 2\n        desviaciones.append(math.sqrt(s / (n - 1)))\n    return desviaciones\n\nfor d in desviacion_notas(notas):\n    print(round(d, 2))","entrada":"","titulo":"Desviación de cada evaluación","error_ok":false,"usa":"notas y promedio_notas","salida":"5.48\n3.19\n2.55\n4.45"},{"tipo":"ojo","texto":"En tu código hacías `datos[i] - promedio`: eso resta una lista menos otra lista y da error. Hay que ir columna por columna, restar el promedio de esa columna y al final sacar la raíz con `math.sqrt`."}],"chequeo":[{"t":"elige","q":"Para el promedio de **un estudiante**, ¿qué se suma?","ops":["Su fila","Su columna","Toda la matriz"],"exp":"Cada estudiante es una fila: se suman sus 4 notas.","code":null},{"t":"salida","q":"¿Qué aparece en la pantalla?","code":"import math\nnotas = [10, 10, 10]\npromedio = sum(notas) / len(notas)\ns = 0\nfor x in notas:\n    s += (x - promedio) ** 2\nprint(math.sqrt(s / (len(notas) - 1)))","ops":["10.0","1.0","3.0"],"exp":"Todas las notas son iguales al promedio: cada resta da 0 y la desviación es 0.0.","usa":"","correcta":"0.0"}]},{"id":"random","titulo":"Tarea: la librería random","corto":"Tarea: random","bloques":[{"tipo":"p","texto":"`random` sirve para sacar **números al azar**, como tirar un dado. En la clase se usa para **llenar la matriz de notas** sin escribirlas a mano. Se importa al inicio: `import random`."},{"tipo":"tabla","cab":["Función","Qué hace"],"filas":[["`random.randint(1, 20)`","Un entero al azar del 1 al 20 (**incluye el 1 y el 20**). Es la que se usa para las notas."],["`random.random()`","Un decimal al azar entre 0 y 1."],["`random.choice(lista)`","Escoge un elemento de la lista al azar."],["`random.shuffle(lista)`","Desordena la lista, como barajar cartas."],["`random.seed(5)`","Hace que siempre salgan los mismos números (sirve para probar)."]]},{"tipo":"code","code":"import random\n\ndef crear_matriz(filas, columnas):\n    matriz = []\n    for i in range(filas):\n        matriz.append([])\n        for j in range(columnas):\n            matriz[i].append(random.randint(1, 20))\n    return matriz\n\nnotas = crear_matriz(5, 4)\nfor fila in notas:\n    print(fila)","entrada":"","titulo":"La matriz de notas al azar","error_ok":false,"usa":"","salida":"[11, 5, 13, 2]\n[3, 18, 4, 12]\n[19, 2, 17, 7]\n[2, 3, 14, 14]\n[3, 8, 3, 18]"},{"tipo":"p","texto":"Es la misma `crea_matrix` de antes, cambiando el `0` por `random.randint(1, 20)`. Cada vez que lo corras salen notas distintas."},{"tipo":"widget","w":"azar"},{"tipo":"h","texto":"La respuesta de la tarea"},{"tipo":"nota","texto":"La librería random de Python sirve para generar números al azar. Se importa con import random. Sus funciones principales son: randint(a, b), que da un entero entre a y b incluidos; random(), que da un decimal entre 0 y 1; uniform(a, b), que da un decimal entre a y b; choice(lista), que escoge un elemento de una lista; shuffle(lista), que desordena una lista; y seed(n), que fija la semilla para que siempre salgan los mismos números. En realidad son números pseudoaleatorios, porque salen de una fórmula. En clase se usa randint(1, 20) para llenar la matriz de notas."}],"chequeo":[{"t":"elige","q":"¿Qué notas puede dar `random.randint(1, 20)`?","ops":["Del 1 al 20, incluidos los dos","Del 1 al 19","Del 0 al 20"],"exp":"`randint` incluye los dos números que le das.","code":null},{"t":"elige","q":"¿Qué hay que escribir al inicio del programa para usar random?","ops":["`import random`","`import math`","Nada"],"exp":"Igual que con math: primero se importa la librería.","code":null}]}],"examen":[{"t":"salida","q":"¿Qué aparece en la pantalla?","code":"matrix = [[1, 2, 3],\n          [4, 5, 6],\n          [7, 8, 9]]\nprint(matrix[2][0])","ops":["3","8","2"],"exp":"Fila 2 (la de abajo: `[7, 8, 9]`), columna 0 (la primera): 7.","usa":"","correcta":"7"},{"t":"salida","q":"¿Qué aparece en la pantalla?","code":"matrix = [[1, 2, 3],\n          [4, 5, 6],\n          [7, 8, 9]]\nprint(matrix[0][1], matrix[1][1])","ops":["1 4","4 5","2 4"],"exp":"`matrix[0][1]`: fila 0, columna 1 = 2. `matrix[1][1]`: fila 1, columna 1 = 5.","usa":"","correcta":"2 5"},{"t":"salida","q":"¿Qué aparece en la pantalla?","code":"m = [[1, 2, 3, 4],\n     [5, 6, 7, 8]]\nprint(len(m), len(m[0]))","ops":["4 2","8","2 2"],"exp":"2 filas y 4 columnas.","usa":"","correcta":"2 4"},{"t":"salida","q":"¿Qué aparece en la pantalla?","code":"m = [[3, 8],\n     [5, 1]]\nfor i in range(len(m)):\n    for j in range(len(m[0])):\n        print(m[i][j], end=\" \")\n    print(\"\")","ops":["3 5\n8 1","3\n8\n5\n1","3 8 5 1"],"exp":"Fila por fila: 3 8, salta de línea, 5 1.","usa":"","correcta":"3 8\n5 1"},{"t":"elige","q":"En `maximo_matrix`, ¿con qué se empieza?","ops":["`maximo = m[0][0]`, la primera casilla","`maximo = 0`","`maximo = m`"],"exp":"Se empieza con la primera casilla. Con 0, si todos los números fueran negativos, diría 0.","code":null},{"t":"completa","q":"Completa para que encuentre el mayor.","code":"m = [[4, 9, 2],\n     [7, 1, 8]]\nmaximo = m[0][0]\nfor i in range(len(m)):\n    for j in range(len(m[0])):\n        if maximo < ___:\n            maximo = m[i][j]\nprint(maximo)","ops":["m[i][j]","m[i]","i"],"exp":"Se compara con la casilla actual: `m[i][j]`.","salida":"9"},{"t":"salida","q":"¿Qué aparece en la pantalla?","code":"print(crea_matrix(2, 2))","ops":["[0, 0, 0, 0]","[[0, 0]]","[[2, 2]]"],"exp":"2 filas con 2 ceros cada una.","usa":"crea_matrix de la clase","correcta":"[[0, 0], [0, 0]]"},{"t":"salida","q":"¿Qué aparece en la pantalla?","code":"print(suma_matriz([[1, 2], [3, 4]], [[10, 20], [30, 40]]))","ops":["[[11, 22, 33, 44]]","[[10, 20], [30, 40]]","[[1, 2], [3, 4]]"],"exp":"Casilla con casilla: 1 + 10, 2 + 20, 3 + 30 y 4 + 40.","usa":"suma_matriz de la clase","correcta":"[[11, 22], [33, 44]]"},{"t":"elige","q":"¿Cuándo se pueden sumar dos matrices?","ops":["Cuando tienen el mismo tamaño (mismas filas y columnas)","Siempre","Cuando tienen los mismos números"],"exp":"Cada casilla de una necesita su pareja en la otra.","code":null},{"t":"salida","q":"¿Qué aparece en la pantalla?","code":"presenta_matrix(zig_zag(2, 3))","ops":["1 2 3\n4 5 6","3 2 1\n4 5 6","1 2 3\n3 2 1"],"exp":"Fila 0 normal: 1 2 3. Fila 1 al revés: el 4 queda a la derecha.","usa":"zig_zag de la clase","correcta":"1 2 3\n6 5 4"},{"t":"elige","q":"En la matriz de notas, ¿qué es una **columna**?","ops":["Una evaluación (P1, P2…) con las notas de todos","Un estudiante con todas sus notas","El promedio"],"exp":"Las filas son estudiantes y las columnas son evaluaciones.","code":null},{"t":"elige","q":"La desviación estándar de unas notas sale **muy grande**. ¿Qué quiere decir?","ops":["Que hay notas muy separadas del promedio","Que todos sacaron lo mismo","Que el promedio es alto"],"exp":"Mide qué tan lejos están las notas de su promedio.","code":null},{"t":"ordena","q":"Ordena las líneas de `crea_matrix`.","trampas":[["matrix.append(0)",2,"Así cada 0 iría a la matriz y no a la fila."],["return matrix",2,"Ese return quedaría dentro del for: terminaría después de la primera fila."]],"exp":"Lista vacía, por cada fila un `append([])`, un for que la llena con ceros, y el return al final.","lineas":[["def crea_matrix(numeroFilas, numeroColumnas):",0],["matrix = []",1],["for i in range(numeroFilas):",1],["matrix.append([])",2],["for j in range(numeroColumnas):",2],["matrix[i].append(0)",3],["return matrix",1]],"salida":"[[0, 0, 0], [0, 0, 0]]"},{"t":"elige","q":"¿Qué notas puede dar `random.randint(1, 20)`?","ops":["Del 1 al 20, incluidos los dos","Del 1 al 19","Decimales"],"exp":"`randint` incluye los dos extremos.","code":null}],"ejercicios":[{"id":"e1","titulo":"Mostrar una matriz y su mayor","fuente":"Clase del 26-10","enunciado":"Con la matriz del ejemplo de clase, muéstrala como tabla y di cuál es el número más grande.","pista":"Copia `presenta_matrix` y `maximo_matrix` de la lección 2 y llámalas.","solucion":"matrix = [[2, 10, 19, 61],\n          [21, 13, 35, 2],\n          [61, 71, 56, 4],\n          [47, 85, 61, 19]]\n\ndef presenta_matrix(m):\n    for i in range(len(m)):\n        for j in range(len(m[0])):\n            print(m[i][j], end=\" \")\n        print(\"\")\n\ndef maximo_matrix(m):\n    maximo = m[0][0]\n    for i in range(len(m)):\n        for j in range(len(m[0])):\n            if maximo < m[i][j]:\n                maximo = m[i][j]\n    return maximo\n\npresenta_matrix(matrix)\nprint(\"El mayor es:\", maximo_matrix(matrix))","salida":"2 10 19 61\n21 13 35 2\n61 71 56 4\n47 85 61 19\nEl mayor es: 85"},{"id":"e2","titulo":"Sumar dos matrices","fuente":"Problemario 143","enunciado":"Suma dos matrices del mismo tamaño casilla por casilla y muestra el resultado como tabla.","pista":"Necesitas `crea_matrix`, `suma_matriz` y `presenta_matrix`, las tres de la clase.","solucion":"def crea_matrix(numeroFilas, numeroColumnas):\n    matrix = []\n    for i in range(numeroFilas):\n        matrix.append([])\n        for j in range(numeroColumnas):\n            matrix[i].append(0)\n    return matrix\n\ndef presenta_matrix(m):\n    for i in range(len(m)):\n        for j in range(len(m[0])):\n            print(m[i][j], end=\" \")\n        print(\"\")\n\ndef suma_matriz(a, b):\n    if len(a) == len(b) and len(a[0]) == len(b[0]):\n        c = crea_matrix(len(a), len(a[0]))\n        for i in range(len(a)):\n            for j in range(len(a[0])):\n                c[i][j] = a[i][j] + b[i][j]\n    else:\n        return \"LOS DATOS SUMINISTRADOS NO SON CORRECTOS\"\n    return c\n\nm1 = [[1, 2],\n      [3, 4]]\nm2 = [[10, 11],\n      [12, 13]]\npresenta_matrix(suma_matriz(m1, m2))","salida":"11 13\n15 17"},{"id":"e3","titulo":"La matriz volteada (transpuesta)","fuente":"Problemario 146","enunciado":"Voltea la matriz: las filas pasan a ser columnas. Es la tabla 1 4 / 2 5 / 3 6 que dibujaste en tu cuaderno.","pista":"Crea una matriz de ceros con las medidas al revés: `crea_matrix(len(m[0]), len(m))`. Después copia `t[j][i] = m[i][j]`.","solucion":"def crea_matrix(numeroFilas, numeroColumnas):\n    matrix = []\n    for i in range(numeroFilas):\n        matrix.append([])\n        for j in range(numeroColumnas):\n            matrix[i].append(0)\n    return matrix\n\ndef presenta_matrix(m):\n    for i in range(len(m)):\n        for j in range(len(m[0])):\n            print(m[i][j], end=\" \")\n        print(\"\")\n\ndef transpuesta(m):\n    t = crea_matrix(len(m[0]), len(m))\n    for i in range(len(m)):\n        for j in range(len(m[0])):\n            t[j][i] = m[i][j]\n    return t\n\nm = [[1, 2, 3],\n     [4, 5, 6]]\npresenta_matrix(transpuesta(m))","salida":"1 4\n2 5\n3 6"},{"id":"e4","titulo":"Notas al azar con sus promedios","fuente":"Clase del 27-10","enunciado":"Llena al azar una matriz de 5 estudiantes y 4 notas (del 1 al 20). Muéstrala y después muestra el promedio de cada estudiante y el de cada evaluación.","pista":"Usa `crear_matriz` de la lección 6 (con `random.randint`), `promedio_estudiante` y `promedio_notas` de la lección 5.","solucion":"import random\n\ndef crear_matriz(filas, columnas):\n    matriz = []\n    for i in range(filas):\n        matriz.append([])\n        for j in range(columnas):\n            matriz[i].append(random.randint(1, 20))\n    return matriz\n\ndef presenta_matrix(m):\n    for i in range(len(m)):\n        for j in range(len(m[0])):\n            print(m[i][j], end=\" \")\n        print(\"\")\n\ndef promedio_estudiante(matriz):     # sumar FILAS\n    promedios = []\n    for i in range(len(matriz)):\n        suma = 0\n        for j in range(len(matriz[0])):\n            suma += matriz[i][j]\n        promedios.append(suma / len(matriz[0]))\n    return promedios\n\ndef promedio_notas(matriz):          # sumar COLUMNAS\n    promedios = []\n    for c in range(len(matriz[0])):\n        suma = 0\n        for f in range(len(matriz)):\n            suma += matriz[f][c]\n        promedios.append(suma / len(matriz))\n    return promedios\n\nnotas = crear_matriz(5, 4)\npresenta_matrix(notas)\nprint(\"Promedio de cada estudiante:\", promedio_estudiante(notas))\nprint(\"Promedio de cada evaluación:\", promedio_notas(notas))","salida":"16 9 10 7\n3 3 9 18\n11 9 12 13\n6 8 8 16\n3 19 3 20\nPromedio de cada estudiante: [10.5, 8.25, 11.25, 9.5, 11.25]\nPromedio de cada evaluación: [7.8, 9.6, 8.4, 14.8]"}]};
+(function(){
+"use strict";
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt=s=>esc(s).replace(/`([^`]+)`/g,"<code>$1</code>").replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>");
+const KW=new Set("def for in range if elif else return while import and or not True False None print len math random append sum round".split(" "));
+function hl(src){
+  let out="",i=0;const n=src.length;
+  while(i<n){
+    const c=src[i];
+    if(c==="#"){let j=src.indexOf("\n",i);if(j<0)j=n;out+='<span class="c">'+esc(src.slice(i,j))+"</span>";i=j;continue;}
+    if(c==='"'||c==="'"){let j=i+1;while(j<n&&src[j]!==c&&src[j]!=="\n")j++;j=Math.min(j+1,n);out+='<span class="s">'+esc(src.slice(i,j))+"</span>";i=j;continue;}
+    if(/[0-9]/.test(c)&&!/[\w]/.test(src[i-1]||"")){let j=i;while(j<n&&/[0-9.e]/.test(src[j]))j++;out+='<span class="nu">'+src.slice(i,j)+"</span>";i=j;continue;}
+    if(/[A-Za-z_]/.test(c)){let j=i;while(j<n&&/\w/.test(src[j]))j++;const w=src.slice(i,j);out+=KW.has(w)?'<span class="k">'+w+"</span>":esc(w);i=j;continue;}
+    out+=esc(c);i++;
+  }
+  return out;
+}
+const codigo=(src,solo)=>'<pre class="code'+(solo?" solo":"")+'"><code>'+hl(src)+"</code></pre>";
+const salidaHTML=t=>'<div class="salida"><span class="lab">Salida</span><pre>'+esc(t)+"</pre></div>";
+function barajar(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+
+/* ---------- estado guardado (solo comodidad) ---------- */
+const KEY="matrices-python-v1";
+let S={lec:{},examen:null,juegos:{}};
+try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&typeof p==="object")S=Object.assign(S,p);}}catch(e){}
+function guardar(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+
+/* ---------- matriz dibujada ---------- */
+function dibujar(m,o){
+  o=o||{};const filas=m.length,cols=m[0].length;
+  const cls=o.cls||(()=>"");const bot=!!o.botones;
+  let h='<div class="matriz" style="grid-template-columns:auto repeat('+cols+',auto)"'+(o.id?' id="'+o.id+'"':"")+(o.label?' role="group" aria-label="'+esc(o.label)+'"':"")+'>';
+  h+='<span class="lbl"></span>';
+  for(let j=0;j<cols;j++)h+=(o.colBtn?'<button type="button" class="lbl'+(o.colOn===j?" on":"")+'" data-col="'+j+'" aria-label="Columna '+j+'">':'<span class="lbl'+(o.colOn===j?" on":"")+'">')+j+(o.colBtn?"</button>":"</span>");
+  for(let i=0;i<filas;i++){
+    h+=(o.rowBtn?'<button type="button" class="lbl'+(o.rowOn===i?" on":"")+'" data-row="'+i+'" aria-label="Fila '+i+'">':'<span class="lbl'+(o.rowOn===i?" on":"")+'">')+i+(o.rowBtn?"</button>":"</span>");
+    for(let j=0;j<cols;j++){
+      const v=m[i][j];const c=cls(i,j);
+      h+=bot?'<button type="button" class="celda '+c+'" data-i="'+i+'" data-j="'+j+'" aria-label="Fila '+i+', columna '+j+'">'+(v===null?"":v)+"</button>"
+            :'<span class="celda '+c+'">'+(v===null?"":v)+"</span>";
+    }
+  }
+  return h+"</div>";
+}
+
+/* ---------- preguntas (lecciones y examen) ---------- */
+function pregunta(q,cont,alResponder){
+  const box=document.createElement("div");box.className="preg";cont.appendChild(box);
+  let hecho=false;
+  const fin=(bien,extra)=>{
+    hecho=true;
+    const fb=document.createElement("div");fb.className="fb "+(bien?"ok":"bad");fb.setAttribute("role","status");
+    fb.innerHTML="<h4>"+(bien?"Correcto":"No es así")+"</h4>"+(extra||"")+"<p>"+fmt(q.exp)+"</p>";
+    box.appendChild(fb);
+    if(alResponder)alResponder(bien,box);
+  };
+  const boton=()=>{const b=document.createElement("button");b.type="button";b.className="btn";b.textContent="Comprobar";b.disabled=true;return b;};
+  if(q.t==="elige"||q.t==="salida"){
+    const todas=q.t==="salida"?[q.correcta].concat(q.ops):q.ops.slice();
+    const orden=barajar(todas.map((_,i)=>i));
+    box.innerHTML='<p class="q">'+fmt(q.q)+"</p>"+(q.usa?'<p class="usa">El código usa '+fmt(q.usa)+".</p>":"")+(q.code?codigo(q.code,true):"")+'<div class="ops'+(q.t==="salida"?" salidas":"")+'">'+orden.map(i=>'<button type="button" class="op-b" data-i="'+i+'" aria-pressed="false"><span class="v'+(q.t==="salida"?" mono":"")+'">'+(q.t==="salida"?esc(todas[i]):fmt(todas[i]))+"</span></button>").join("")+"</div>";
+    let sel=null;const b=boton();box.appendChild(b);
+    $$(".op-b",box).forEach(x=>x.addEventListener("click",()=>{if(hecho)return;$$(".op-b",box).forEach(y=>y.setAttribute("aria-pressed","false"));x.setAttribute("aria-pressed","true");sel=+x.dataset.i;b.disabled=false;}));
+    b.addEventListener("click",()=>{
+      const bien=sel===0;b.remove();
+      $$(".op-b",box).forEach(x=>{x.disabled=true;const i=+x.dataset.i;if(i===0)x.classList.add("ok");else if(i===sel)x.classList.add("bad");});
+      fin(bien,bien||q.t!=="elige"?"":"<p>La respuesta era: "+fmt(todas[0])+"</p>");
+    });
+  }else if(q.t==="completa"){
+    const partes=q.code.split("___");const orden=barajar(q.ops.map((_,i)=>i));
+    const pinta=v=>'<pre class="code solo"><code>'+hl(partes[0])+'<span class="hueco'+(v==null?" vacio":"")+'">'+(v==null?"___":esc(v))+"</span>"+hl(partes[1])+"</code></pre>";
+    box.innerHTML='<p class="q">'+fmt(q.q)+'</p><div class="cod">'+pinta(null)+'</div><div class="fichas">'+orden.map(i=>'<button type="button" class="ficha" data-i="'+i+'" aria-pressed="false">'+esc(q.ops[i])+"</button>").join("")+"</div>";
+    let sel=null;const b=boton();box.appendChild(b);
+    $$(".ficha",box).forEach(x=>x.addEventListener("click",()=>{if(hecho)return;$$(".ficha",box).forEach(y=>y.setAttribute("aria-pressed","false"));x.setAttribute("aria-pressed","true");sel=+x.dataset.i;$(".cod",box).innerHTML=pinta(q.ops[sel]);b.disabled=false;}));
+    b.addEventListener("click",()=>{
+      const bien=sel===0;b.remove();$$(".ficha",box).forEach(x=>x.disabled=true);
+      $(".cod",box).innerHTML=pinta(q.ops[0]);$(".hueco",box).classList.add(bien?"ok":"bad");
+      fin(bien,(bien?"":"<p>Lo correcto es <code>"+esc(q.ops[0])+"</code>.</p>")+"<pre>"+esc(q.salida)+"</pre>");
+    });
+  }else if(q.t==="ordena"){
+    const bl=q.lineas.map((l,i)=>({id:"s"+i,t:l[0],n:l[1]})).concat(q.trampas.map((t,i)=>({id:"t"+i,t:t[0],n:t[1],razon:t[2]})));
+    const B=Object.fromEntries(bl.map(x=>[x.id,x]));
+    let banco=barajar(bl.map(x=>x.id)),prog=[];
+    box.innerHTML='<p class="q">'+fmt(q.q)+'</p><p style="font-size:.9rem;color:var(--muted)">Toca los bloques en orden. Cada uno ya trae su sangría. '+q.trampas.length+' bloques sobran.</p><span class="zona-t">Tu programa</span><div class="prog"></div><span class="zona-t">Bloques</span><div class="banco"></div>';
+    const b=boton();box.appendChild(b);
+    const blq=x=>'<button type="button" class="blq" data-b="'+x.id+'"><span class="ind" style="--n:'+x.n+'"></span><span class="bt">'+hl(x.t)+"</span></button>";
+    function pinta(){
+      $(".prog",box).innerHTML=prog.length?prog.map(id=>blq(B[id])).join(""):'<span class="vacio-t">Aquí se va armando el programa.</span>';
+      $(".banco",box).innerHTML=banco.length?banco.map(id=>blq(B[id])).join(""):'<span class="vacio-t">No quedan bloques.</span>';
+      $$(".prog .blq",box).forEach(x=>x.addEventListener("click",()=>{if(hecho)return;prog=prog.filter(y=>y!==x.dataset.b);banco.push(x.dataset.b);pinta();}));
+      $$(".banco .blq",box).forEach(x=>x.addEventListener("click",()=>{if(hecho)return;banco=banco.filter(y=>y!==x.dataset.b);prog.push(x.dataset.b);pinta();}));
+      b.disabled=prog.length===0;
+    }
+    pinta();
+    b.addEventListener("click",()=>{
+      b.remove();let bad=-1,msg="";
+      for(let i=0;i<prog.length;i++){const x=B[prog[i]];if(x.razon){bad=i;msg="La línea "+(i+1)+" sobra. "+x.razon;break;}if(prog[i]!=="s"+i){bad=i;msg="La línea "+(i+1)+" no va ahí.";break;}}
+      if(bad<0&&prog.length<q.lineas.length){bad=prog.length;msg="Faltan líneas.";}
+      $$(".prog .blq",box).forEach((x,i)=>{if(bad<0)x.classList.add("ok");else if(i===bad)x.classList.add("bad");});
+      const sol=q.lineas.map(l=>"    ".repeat(l[1])+l[0]).join("\n");
+      fin(bad<0,(bad<0?"":"<p>"+fmt(msg)+"</p><pre>"+esc(sol)+"</pre>"));
+    });
+  }
+  return box;
+}
+
+/* ---------- widgets ---------- */
+const W={};
+W.explorar=function(el){
+  const m=[[1,2,3],[4,5,6],[7,8,9]];let sel={i:1,j:2},fila=null;
+  function pinta(){
+    const cls=(i,j)=>fila!==null?(i===fila?"sel":""):(i===sel.i&&j===sel.j?"sel":(i===sel.i||j===sel.j?"tinte":""));
+    el.innerHTML='<p class="wt">Toca una celda o el número de una fila</p>'+dibujar(m,{botones:true,rowBtn:true,cls,rowOn:fila!==null?fila:sel.i,colOn:fila!==null?null:sel.j,label:"matrix"})+
+      '<div class="lectura" aria-live="polite">'+(fila!==null?"matrix["+fila+"] = ["+m[fila].join(", ")+"]   ← la fila completa":"matrix["+sel.i+"]["+sel.j+"] = "+m[sel.i][sel.j]+"   ← fila "+sel.i+", columna "+sel.j)+"</div>";
+    $$(".celda",el).forEach(b=>b.addEventListener("click",()=>{fila=null;sel={i:+b.dataset.i,j:+b.dataset.j};pinta();}));
+    $$("[data-row]",el).forEach(b=>b.addEventListener("click",()=>{fila=+b.dataset.row;pinta();}));
+  }
+  pinta();
+};
+W.recorrer=function(el){
+  const m=[[2,10,19,61],[21,13,35,2],[61,71,56,4],[47,85,61,19]];
+  const pasos=[];let mx=m[0][0],pos=[0,0];
+  for(let i=0;i<4;i++)for(let j=0;j<4;j++){let cambia=false;if(mx<m[i][j]){mx=m[i][j];pos=[i,j];cambia=true;}pasos.push({i,j,mx,pos:pos.slice(),cambia});}
+  let k=0,timer=null;
+  function pinta(){
+    const p=pasos[k];
+    const cls=(i,j)=>{let c="";const idx=i*4+j;if(idx<k)c="visto";if(i===p.i&&j===p.j)c="sel";if(i===p.pos[0]&&j===p.pos[1])c+=" max";return c;};
+    el.innerHTML='<p class="wt">Paso a paso: <code>maximo_matrix(matrix)</code></p>'+dibujar(m,{cls,rowOn:p.i,colOn:p.j,label:"matrix"})+
+      '<div class="vars"><span>i = <b>'+p.i+'</b></span><span>j = <b>'+p.j+'</b></span><span>m[i][j] = <b>'+m[p.i][p.j]+'</b></span><span>maximo = <b>'+p.mx+"</b></span></div>"+
+      '<p class="ayuda" aria-live="polite">'+(k===0?"Empieza con maximo = m[0][0] = 2.":p.cambia?"¿maximo < "+m[p.i][p.j]+"? Sí: maximo pasa a "+p.mx+".":"¿maximo < "+m[p.i][p.j]+"? No: maximo sigue en "+p.mx+".")+(k===pasos.length-1?" Terminó: devuelve "+p.mx+".":"")+"</p>"+
+      '<div class="fila-ctrl"><button type="button" class="btn chico" id="rc-paso"'+(k===pasos.length-1?" disabled":"")+'>Siguiente paso</button><button type="button" class="btn sec chico" id="rc-play">'+(timer?"Pausa":"Reproducir")+'</button><button type="button" class="btn sec chico" id="rc-ini">Reiniciar</button></div>';
+    $("#rc-paso",el).addEventListener("click",()=>{if(k<pasos.length-1){k++;pinta();}});
+    $("#rc-ini",el).addEventListener("click",()=>{parar();k=0;pinta();});
+    $("#rc-play",el).addEventListener("click",()=>{if(timer){parar();pinta();return;}if(k===pasos.length-1)k=0;timer=setInterval(()=>{if(k<pasos.length-1){k++;pinta();}else{parar();pinta();}},700);pinta();});
+  }
+  function parar(){clearInterval(timer);timer=null;}
+  el._parar=parar;pinta();
+};
+W.suma=function(el){
+  const A=[[1,2],[3,4]],B=[[10,11],[12,13]],C=A.map((f,i)=>f.map((v,j)=>v+B[i][j]));let s={i:1,j:0};
+  function pinta(){
+    const cls=(i,j)=>i===s.i&&j===s.j?"sel":"";
+    el.innerHTML='<p class="wt">Toca una celda del resultado</p><div class="ecu"><figure>'+dibujar(A,{cls})+'<figcaption>a</figcaption></figure><span class="op">+</span><figure>'+dibujar(B,{cls})+'<figcaption>b</figcaption></figure><span class="op">=</span><figure>'+dibujar(C,{cls,botones:true})+'<figcaption>c</figcaption></figure></div>'+
+      '<div class="lectura" aria-live="polite">c['+s.i+']['+s.j+'] = a['+s.i+']['+s.j+'] + b['+s.i+']['+s.j+'] = '+A[s.i][s.j]+" + "+B[s.i][s.j]+" = "+C[s.i][s.j]+"</div>";
+    $$("button.celda",el).forEach(b=>b.addEventListener("click",()=>{s={i:+b.dataset.i,j:+b.dataset.j};pinta();}));
+  }
+  pinta();
+};
+function ordenZigzag(n,m,modo){
+  const o=[];
+  if(modo==="zz2"){for(let i=0;i<Math.floor(n/2);i++){for(let j=0;j<m;j++)o.push([i,j]);for(let j=m-1;j>=0;j--)o.push([n-i-1,j]);}}
+  else{for(let i=0;i<n;i+=2){for(let j=0;j<m;j++)o.push([i,j]);if(i+1!==n)for(let j=m-1;j>=0;j--)o.push([i+1,j]);}}
+  return o;
+}
+W.zigzag=function(el){
+  let n=4,m=5,modo="zz",orden=ordenZigzag(n,m,modo),k=orden.length,timer=null;
+  function parar(){clearInterval(timer);timer=null;}
+  function pinta(){
+    const g=Array.from({length:n},()=>Array(m).fill(0));for(let t=0;t<k;t++){const [i,j]=orden[t];g[i][j]=t+1;}
+    const ult=k>0?orden[k-1]:null;
+    const cls=(i,j)=>(ult&&ult[0]===i&&ult[1]===j)?"sel":"";
+    const opt=(a,b)=>Array.from({length:b-a+1},(_,x)=>a+x);
+    el.innerHTML='<p class="wt">Llenado con el contador k</p><div class="fila-ctrl"><label for="zz-modo" class="ayuda">Versión</label><select id="zz-modo"><option value="zz"'+(modo==="zz"?" selected":"")+'>zig_zag</option><option value="zz2"'+(modo==="zz2"?" selected":"")+'>zig_zag_2</option></select>'+
+      '<label for="zz-n" class="ayuda">Filas</label><select id="zz-n">'+opt(2,6).map(x=>"<option"+(x===n?" selected":"")+">"+x+"</option>").join("")+'</select><label for="zz-m" class="ayuda">Columnas</label><select id="zz-m">'+opt(2,6).map(x=>"<option"+(x===m?" selected":"")+">"+x+"</option>").join("")+"</select></div>"+
+      dibujar(g.map(f=>f.map(v=>v===0&&k<orden.length?null:v)),{cls,rowOn:ult?ult[0]:null,colOn:ult?ult[1]:null,label:"c"})+
+      '<p class="ayuda" aria-live="polite">'+(k===0?"Todas las celdas en 0. Dale a Reproducir.":"k = "+k+" va en c["+ult[0]+"]["+ult[1]+"]"+(k===orden.length?(orden.length<n*m?". Terminó: la fila del medio quedó en 0.":". Terminó."):""))+"</p>"+
+      '<div class="fila-ctrl"><button type="button" class="btn chico" id="zz-play">'+(timer?"Pausa":"Reproducir")+'</button><button type="button" class="btn sec chico" id="zz-paso"'+(k>=orden.length?" disabled":"")+'>Un paso</button><button type="button" class="btn sec chico" id="zz-ini">Vaciar</button></div>';
+    const cambio=()=>{parar();modo=$("#zz-modo",el).value;n=+$("#zz-n",el).value;m=+$("#zz-m",el).value;orden=ordenZigzag(n,m,modo);k=orden.length;pinta();};
+    ["#zz-modo","#zz-n","#zz-m"].forEach(s=>$(s,el).addEventListener("change",cambio));
+    $("#zz-ini",el).addEventListener("click",()=>{parar();k=0;pinta();});
+    $("#zz-paso",el).addEventListener("click",()=>{if(k<orden.length){k++;pinta();}});
+    $("#zz-play",el).addEventListener("click",()=>{if(timer){parar();pinta();return;}if(k>=orden.length)k=0;timer=setInterval(()=>{if(k<orden.length){k++;pinta();}else{parar();pinta();}},420);pinta();});
+  }
+  el._parar=parar;pinta();
+};
+function estad(M){
+  const f=M.length,c=M[0].length;
+  const pe=M.map(r=>r.reduce((a,b)=>a+b,0)/c);
+  const pn=[],de=[];
+  for(let j=0;j<c;j++){let s=0;for(let i=0;i<f;i++)s+=M[i][j];pn.push(s/f);let q=0;for(let i=0;i<f;i++)q+=(M[i][j]-pn[j])**2;de.push(Math.sqrt(q/(f-1)));}
+  return {pe,pn,de};
+}
+W.notas=function(el){
+  let M=[[4,10,10,15],[12,8,15,17],[10,14,9,11],[18,16,12,20],[6,11,14,9]];let sel={tipo:"fila",k:1};
+  function pinta(){
+    const {pe,pn,de}=estad(M);const c=M[0].length;
+    const onF=i=>sel.tipo==="fila"&&sel.k===i, onC=j=>sel.tipo==="col"&&sel.k===j;
+    let h='<p class="wt">Toca un estudiante o una evaluación</p><div class="notas-t"><table><thead><tr><th></th>';
+    for(let j=0;j<c;j++)h+='<th><button type="button" data-col="'+j+'"'+(onC(j)?' class="on" style="padding:2px 6px;border-radius:6px"':"")+'>P'+(j+1)+"</button></th>";
+    h+="<th>Promedio</th></tr></thead><tbody>";
+    M.forEach((r,i)=>{h+='<tr><th><button type="button" data-row="'+i+'"'+(onF(i)?' class="on" style="padding:2px 6px;border-radius:6px"':"")+'>Est. '+(i+1)+"</button></th>"+r.map((v,j)=>'<td class="n'+(onF(i)||onC(j)?" tin":"")+'">'+v+"</td>").join("")+'<td class="res'+(onF(i)?" on":"")+'">'+pe[i].toFixed(2)+"</td></tr>";});
+    h+='<tr><th>Prom. gen.</th>'+pn.map((v,j)=>'<td class="res'+(onC(j)?" on":"")+'">'+v.toFixed(2)+"</td>").join("")+"<td></td></tr>";
+    h+='<tr><th>Desv. est.</th>'+de.map((v,j)=>'<td class="res'+(onC(j)?" on":"")+'">'+v.toFixed(2)+"</td>").join("")+"<td></td></tr></tbody></table></div>";
+    let lec;
+    if(sel.tipo==="fila"){const r=M[sel.k];lec="Est. "+(sel.k+1)+" (fila "+sel.k+"): ("+r.join(" + ")+") / "+c+" = "+pe[sel.k].toFixed(2);}
+    else{const col=M.map(r=>r[sel.k]);lec="P"+(sel.k+1)+" (columna "+sel.k+"): promedio ("+col.join(" + ")+") / "+M.length+" = "+pn[sel.k].toFixed(2)+" · desviación "+de[sel.k].toFixed(2);}
+    h+='<div class="lectura" aria-live="polite">'+lec+'</div><div class="fila-ctrl"><button type="button" class="btn sec chico" id="nt-azar">Notas al azar del 1 al 20</button><button type="button" class="btn sec chico" id="nt-clase">Volver a las del ejemplo</button></div>';
+    el.innerHTML=h;
+    $$("[data-row]",el).forEach(b=>b.addEventListener("click",()=>{sel={tipo:"fila",k:+b.dataset.row};pinta();}));
+    $$("[data-col]",el).forEach(b=>b.addEventListener("click",()=>{sel={tipo:"col",k:+b.dataset.col};pinta();}));
+    $("#nt-azar",el).addEventListener("click",()=>{M=M.map(r=>r.map(()=>rnd(1,20)));pinta();});
+    $("#nt-clase",el).addEventListener("click",()=>{M=[[4,10,10,15],[12,8,15,17],[10,14,9,11],[18,16,12,20],[6,11,14,9]];pinta();});
+  }
+  pinta();
+};
+W.azar=function(el){
+  let modo="randint",cuenta=Array(20).fill(0),total=0,ultimos=[];
+  function tirar(n){for(let t=0;t<n;t++){const v=modo==="randint"?rnd(1,20):rnd(1,19);cuenta[v-1]++;total++;ultimos.push(v);}ultimos=ultimos.slice(-10);pinta();}
+  function pinta(){
+    const mx=Math.max(1,...cuenta);
+    el.innerHTML='<p class="wt">Prueba el azar</p><div class="fila-ctrl"><label for="az-modo" class="ayuda">Función</label><select id="az-modo"><option value="randint"'+(modo==="randint"?" selected":"")+'>random.randint(1, 20)</option><option value="randrange"'+(modo==="randrange"?" selected":"")+'>random.randrange(1, 20)</option></select></div>'+
+      '<div class="fila-ctrl"><button type="button" class="btn chico" id="az-1">Sacar 1 número</button><button type="button" class="btn sec chico" id="az-1000">Sacar 1000</button><button type="button" class="btn sec chico" id="az-0">Borrar</button></div>'+
+      '<div class="lectura" aria-live="polite">'+(total?"Últimos: "+ultimos.join(", ")+" · total "+total+" · ¿salió el 20? "+(cuenta[19]?"sí":"no"):"Todavía no hay tiradas.")+"</div>"+
+      '<div><div class="barras" aria-hidden="true">'+cuenta.map(v=>'<div style="height:'+(v/mx*100)+'%"></div>').join("")+'</div><div class="barras-eje" aria-hidden="true">'+cuenta.map((_,i)=>"<span>"+(i+1)+"</span>").join("")+"</div></div>"+
+      '<p class="ayuda">Con <code>randint</code> aparecen del 1 al 20. Con <code>randrange(1, 20)</code> el 20 nunca sale, igual que en <code>range</code>.</p>';
+    $("#az-modo",el).addEventListener("change",e=>{modo=e.target.value;cuenta=Array(20).fill(0);total=0;ultimos=[];pinta();});
+    $("#az-1",el).addEventListener("click",()=>tirar(1));
+    $("#az-1000",el).addEventListener("click",()=>tirar(1000));
+    $("#az-0",el).addEventListener("click",()=>{cuenta=Array(20).fill(0);total=0;ultimos=[];pinta();});
+  }
+  tirar(1000);
+};
+function formula(){
+  return '<div class="formula" role="img" aria-label="sigma igual a la raíz de la suma de (x sub i menos el promedio) al cuadrado, dividida entre n menos 1"><span>σ =&nbsp;</span><span class="raiz"><span class="sig">√</span><span class="bajo"><span class="frac"><span>Σ<sub>i=1</sub><sup>n</sup> (x<sub>i</sub> − x̄)<sup>2</sup></span><span>n − 1</span></span></span></span></div>';
+}
+
+/* ---------- vistas ---------- */
+let widgetsVivos=[];
+function limpiar(){widgetsVivos.forEach(w=>w._parar&&w._parar());widgetsVivos=[];}
+let lecActual=0;
+try{const v=+localStorage.getItem(KEY+"-lec");if(v>=0&&v<DATA.lecciones.length)lecActual=v;}catch(e){}
+function verAprende(){
+  const L=DATA.lecciones,l=L[lecActual];
+  let h='<div class="intro"><h2>Aprende</h2><p>Lo que se vio el lunes 26 y el martes 27, explicado paso a paso en '+L.length+' lecciones cortas. Empieza por la 1. Al final de cada una hay dos preguntas fáciles para comprobar.</p></div><div class="aprende"><nav class="indice" aria-label="Lecciones"><ol>';
+  L.forEach((x,i)=>{h+='<li><button type="button" data-lec="'+i+'" aria-current="'+(i===lecActual)+'" class="'+(S.lec[x.id]?"hecho":"")+'"><span class="n">'+(S.lec[x.id]?"✓":i+1)+"</span>"+esc(x.corto)+"</button></li>";});
+  h+='</ol></nav><article class="leccion"><span class="eti">Lección '+(lecActual+1)+" de "+L.length+"</span><h2>"+esc(l.titulo)+"</h2>";
+  l.bloques.forEach((b,k)=>{
+    if(b.tipo==="p")h+="<p>"+fmt(b.texto)+"</p>";
+    else if(b.tipo==="h")h+="<h3>"+fmt(b.texto)+"</h3>";
+    else if(b.tipo==="lista")h+="<ul>"+b.items.map(x=>"<li>"+fmt(x)+"</li>").join("")+"</ul>";
+    else if(b.tipo==="ojo")h+='<div class="ojo"><span class="ic" aria-hidden="true">!</span><div><b>Ojo</b><p>'+fmt(b.texto)+"</p></div></div>";
+    else if(b.tipo==="code")h+='<div class="bloque-code">'+(b.titulo||b.usa?'<span class="tit">'+(b.titulo?fmt(b.titulo):"")+(b.usa?'<span class="usa">'+(b.titulo?" · ":"")+"usa "+fmt(b.usa)+"</span>":"")+"</span>":"")+codigo(b.code)+salidaHTML(b.salida)+"</div>";
+    else if(b.tipo==="widget")h+='<div class="widget" data-w="'+b.w+'"></div>';
+    else if(b.tipo==="formula")h+=formula();
+    else if(b.tipo==="tabla")h+='<div class="tabla"><table><thead><tr>'+b.cab.map(c=>"<th>"+esc(c)+"</th>").join("")+"</tr></thead><tbody>"+b.filas.map(f=>"<tr>"+f.map(c=>"<td>"+fmt(c)+"</td>").join("")+"</tr>").join("")+"</tbody></table></div>";
+    else if(b.tipo==="nota")h+='<div class="nota"><p>'+fmt(b.texto)+'</p><button type="button" class="btn sec chico copiar" data-copiar="'+k+'">Copiar el texto</button></div>';
+  });
+  h+='<h3>Comprueba</h3><div class="chequeo" id="chequeo"></div><div class="navlec">'+(lecActual>0?'<button type="button" class="btn sec" data-lec="'+(lecActual-1)+'">← '+esc(L[lecActual-1].corto)+"</button>":"<span></span>")+
+     (lecActual<L.length-1?'<button type="button" class="btn" data-lec="'+(lecActual+1)+'">Siguiente: '+esc(L[lecActual+1].corto)+" →</button>":'<button type="button" class="btn" data-ir="juegos">Ir a los juegos →</button>')+"</div></article></div>";
+  $("#vista").innerHTML=h;
+  $$("[data-w]").forEach(el=>{W[el.dataset.w](el);widgetsVivos.push(el);});
+  let bien=0;const ch=$("#chequeo");
+  l.chequeo.forEach(q=>pregunta(q,ch,ok=>{if(ok)bien++;if(bien===l.chequeo.length&&!S.lec[l.id]){S.lec[l.id]=true;guardar();const b=$('.indice [data-lec="'+lecActual+'"]');if(b){b.classList.add("hecho");$(".n",b).textContent="✓";}}}));
+  $$("[data-lec]").forEach(b=>b.addEventListener("click",()=>{limpiar();lecActual=+b.dataset.lec;try{localStorage.setItem(KEY+"-lec",lecActual);}catch(e){}verAprende();window.scrollTo({top:0});}));
+  $$("[data-copiar]").forEach(b=>b.addEventListener("click",()=>copiar(l.bloques[+b.dataset.copiar].texto,b)));
+}
+function copiar(txt,btn){
+  const ok=()=>{const t=btn.textContent;btn.textContent="Copiado";setTimeout(()=>{btn.textContent=t;},1500);};
+  try{navigator.clipboard.writeText(txt).then(ok,()=>seleccionar(btn));}catch(e){seleccionar(btn);}
+}
+function seleccionar(btn){const p=btn.parentElement.querySelector("p,pre");if(!p)return;const r=document.createRange();r.selectNodeContents(p);const s=getSelection();s.removeAllRanges();s.addRange(r);btn.textContent="Texto seleccionado: cópialo";}
+
+/* ---------- juegos ---------- */
+const JUEGOS=[
+  {id:"celda",t:"Encuentra la celda",d:"Te doy m[i][j] y tocas la celda. Luego al revés: ves la celda y eliges cómo se escribe.",mini:[5]},
+  {id:"recorrido",t:"Sigue el recorrido",d:"Lee los for y toca las celdas en el orden en que el programa las visita: por filas, por columnas, al revés y en zigzag.",mini:[0,1,2,3]},
+  {id:"filacol",t:"¿Fila o columna?",d:"Con la matriz de notas: toca lo que hay que sumar para cada promedio.",mini:[1,5,9,13]},
+];
+function verJuegos(){
+  let h='<div class="intro"><h2>Juegos</h2><p>Tres juegos cortos para practicar lo que más se usa con matrices: ubicar una celda, entender el orden de los for y distinguir filas de columnas.</p></div><div class="tarjetas">';
+  JUEGOS.forEach(g=>{const r=S.juegos[g.id];h+='<button type="button" class="tarj" data-juego="'+g.id+'"><div class="mini" aria-hidden="true">'+Array.from({length:16},(_,i)=>"<i"+(g.mini.includes(i)?' class="on"':"")+"></i>").join("")+"</div><h3>"+g.t+"</h3><p>"+g.d+"</p>"+(r?'<span class="rec">Mejor resultado: '+r+"</span>":"")+"</button>";});
+  h+='</div><div id="juego" style="margin-top:22px"></div>';
+  $("#vista").innerHTML=h;
+  $$("[data-juego]").forEach(b=>b.addEventListener("click",()=>{({celda:jCelda,recorrido:jRecorrido,filacol:jFilaCol})[b.dataset.juego]($("#juego"));$("#juego").scrollIntoView({behavior:"smooth",block:"start"});}));
+}
+function finJuego(cont,id,txt,puntos,total,otra){
+  const prev=S.juegos[id];const nuevo=puntos+" de "+total;
+  if(!prev||parseInt(prev)<puntos){S.juegos[id]=nuevo;guardar();}
+  cont.innerHTML='<div class="final"><span class="grande">'+puntos+"<small> / "+total+"</small></span><p>"+txt+'</p><div class="fila-ctrl"><button type="button" class="btn" id="otra">Jugar otra vez</button><button type="button" class="btn sec" id="volver">Ver los juegos</button></div></div>';
+  $("#otra",cont).addEventListener("click",()=>otra(cont));
+  $("#volver",cont).addEventListener("click",()=>{verJuegos();window.scrollTo({top:0});});
+}
+function matrizAzar(f,c){return Array.from({length:f},()=>Array.from({length:c},()=>rnd(1,99)));}
+function jCelda(cont){
+  const R=10;let r=0,pts=0,racha=0;
+  function ronda(){
+    if(r>=R){finJuego(cont,"celda",pts===R?"Perfecto: ya ubicas cualquier celda.":pts>=7?"Bien. Recuerda: primero la fila, después la columna.":"Repasa la lección 1: m[fila][columna], las dos desde 0.",pts,R,jCelda);return;}
+    const f=rnd(3,4),c=rnd(3,5),M=matrizAzar(f,c),i=rnd(0,f-1),j=rnd(0,c-1);
+    const inv=r>=5;
+    let h='<div class="juego"><div class="marcador"><span class="pill">Ronda '+(r+1)+" de "+R+'</span><span class="pill">Aciertos: '+pts+'</span><span class="pill esp">Racha: '+racha+'</span></div><div class="barra"><i style="width:'+(r/R*100)+'%"></i></div>';
+    if(!inv){
+      h+='<p class="consigna">Toca <code>m['+i+"]["+j+"]</code></p>"+dibujar(M,{botones:true,label:"m"})+'<p class="ayuda" id="msg" aria-live="polite"></p></div>';
+      cont.innerHTML=h;
+      $$(".celda",cont).forEach(b=>b.addEventListener("click",()=>{
+        if(cont._hecho)return;cont._hecho=true;
+        const bi=+b.dataset.i,bj=+b.dataset.j,bien=bi===i&&bj===j;
+        $$(".celda",cont).forEach(x=>{x.disabled=true;if(+x.dataset.i===i&&+x.dataset.j===j)x.classList.add("ok");});
+        if(!bien)b.classList.add("bad");
+        if(bien){pts++;racha++;}else racha=0;
+        $("#msg",cont).textContent=bien?"Bien: fila "+i+", columna "+j+" vale "+M[i][j]+".":"Esa es m["+bi+"]["+bj+"]. La pedida está en la fila "+i+" y la columna "+j+".";
+        siguiente();
+      }));
+    }else{
+      const cand=[[i,j],[j,i],[i,(j+1)%c],[(i+1)%f,j]].filter(([a,b])=>a<f&&b<c);
+      const ops=[];cand.forEach(([a,b])=>{const s="m["+a+"]["+b+"]";if(!ops.includes(s))ops.push(s);});
+      while(ops.length<4){const s="m["+rnd(0,f-1)+"]["+rnd(0,c-1)+"]";if(!ops.includes(s))ops.push(s);}
+      const correcta="m["+i+"]["+j+"]";
+      h+='<p class="consigna">¿Cómo se escribe la celda marcada?</p>'+dibujar(M,{cls:(a,b)=>a===i&&b===j?"sel":"",label:"m"})+'<div class="fichas">'+barajar(ops).map(s=>'<button type="button" class="ficha" data-s="'+s+'">'+s+"</button>").join("")+'</div><p class="ayuda" id="msg" aria-live="polite"></p></div>';
+      cont.innerHTML=h;
+      $$(".ficha",cont).forEach(b=>b.addEventListener("click",()=>{
+        if(cont._hecho)return;cont._hecho=true;
+        const bien=b.dataset.s===correcta;
+        $$(".ficha",cont).forEach(x=>{x.disabled=true;if(x.dataset.s===correcta)x.setAttribute("aria-pressed","true");});
+        if(bien){pts++;racha++;}else{racha=0;b.style.borderColor="var(--bad)";}
+        $("#msg",cont).textContent=bien?"Bien: fila "+i+", columna "+j+".":"Era "+correcta+": cuenta la fila desde arriba (empezando en 0) y la columna desde la izquierda.";
+        siguiente();
+      }));
+    }
+    cont._hecho=false;
+  }
+  function siguiente(){const b=document.createElement("button");b.type="button";b.className="btn";b.textContent=r+1<R?"Siguiente":"Ver resultado";$(".juego",cont).appendChild(b);b.focus({preventScroll:true});b.addEventListener("click",()=>{r++;ronda();});}
+  ronda();
+}
+const NIVELES=[
+  {t:"Por filas",f:3,c:4,code:"for i in range(3):\n    for j in range(4):\n        k += 1\n        m[i][j] = k",orden:(f,c)=>{const o=[];for(let i=0;i<f;i++)for(let j=0;j<c;j++)o.push([i,j]);return o;}},
+  {t:"Por columnas",f:3,c:4,code:"for j in range(4):\n    for i in range(3):\n        k += 1\n        m[i][j] = k",orden:(f,c)=>{const o=[];for(let j=0;j<c;j++)for(let i=0;i<f;i++)o.push([i,j]);return o;}},
+  {t:"De abajo hacia arriba",f:3,c:3,code:"for i in range(2, -1, -1):\n    for j in range(3):\n        k += 1\n        m[i][j] = k",orden:(f,c)=>{const o=[];for(let i=f-1;i>=0;i--)for(let j=0;j<c;j++)o.push([i,j]);return o;}},
+  {t:"Zigzag",f:3,c:4,code:"# zig_zag: fila 0 de izquierda a derecha,\n# fila 1 de derecha a izquierda,\n# fila 2 otra vez de izquierda a derecha",orden:(f,c)=>ordenZigzag(f,c,"zz")},
+];
+function jRecorrido(cont){
+  let nv=0,errTot=0;
+  function nivel(){
+    if(nv>=NIVELES.length){const p=Math.max(0,10-errTot);finJuego(cont,"recorrido",errTot===0?"Sin un solo error: entiendes cómo se mueven los for.":"Te equivocaste "+errTot+" "+(errTot===1?"vez":"veces")+". El for de afuera cambia lento y el de adentro rápido.",p,10,jRecorrido);return;}
+    const N=NIVELES[nv],orden=N.orden(N.f,N.c);let k=0,err=0;
+    const g=Array.from({length:N.f},()=>Array(N.c).fill(null));
+    function pinta(msg,malo){
+      cont.innerHTML='<div class="juego"><div class="marcador"><span class="pill">Nivel '+(nv+1)+" de "+NIVELES.length+": "+N.t+'</span><span class="pill esp">Errores: '+errTot+'</span></div><div class="barra"><i style="width:'+(nv/NIVELES.length*100)+'%"></i></div>'+codigo(N.code,true)+
+        '<p class="consigna">Toca la celda donde va el '+(k+1)+"</p>"+dibujar(g,{botones:true,label:"m",cls:(i,j)=>g[i][j]!==null?"ok":(malo&&malo[0]===i&&malo[1]===j?"bad":(err>=2&&orden[k]&&orden[k][0]===i&&orden[k][1]===j?"pista":""))})+'<p class="ayuda" aria-live="polite">'+(msg||"El for de afuera es el que cambia más lento.")+"</p></div>";
+      $$(".celda",cont).forEach(b=>b.addEventListener("click",()=>{
+        const i=+b.dataset.i,j=+b.dataset.j;if(g[i][j]!==null)return;
+        if(i===orden[k][0]&&j===orden[k][1]){g[i][j]=++k;err=0;
+          if(k===orden.length){pinta("Listo: así queda la matriz.");const b2=document.createElement("button");b2.type="button";b2.className="btn";b2.textContent=nv+1<NIVELES.length?"Siguiente nivel":"Ver resultado";$(".juego",cont).appendChild(b2);b2.focus({preventScroll:true});b2.addEventListener("click",()=>{nv++;nivel();});}
+          else pinta();
+        }else{err++;errTot++;pinta(err>=2?"La celda con borde punteado es la que sigue.":"Esa no. Mira qué variable cambia en el for de adentro.",[i,j]);}
+      }));
+    }
+    pinta();
+  }
+  nivel();
+}
+function jFilaCol(cont){
+  const R=8;let r=0,pts=0;
+  const M=[[12,8,15,17],[10,14,9,11],[18,16,12,20],[6,11,14,9]];
+  function ronda(){
+    if(r>=R){finJuego(cont,"filacol",pts===R?"Perfecto: estudiante = fila, evaluación = columna.":"Recuerda: cada fila es un estudiante y cada columna una evaluación.",pts,R,jFilaCol);return;}
+    const tipo=r%2===0?"fila":"col";const k=rnd(0,3);
+    const consigna=tipo==="fila"?"Toca lo que se suma para el promedio del <b>Est. "+(k+1)+"</b>":"Toca lo que se suma para el promedio de la evaluación <b>P"+(k+1)+"</b>";
+    let h='<div class="juego"><div class="marcador"><span class="pill">Ronda '+(r+1)+" de "+R+'</span><span class="pill esp">Aciertos: '+pts+'</span></div><div class="barra"><i style="width:'+(r/R*100)+'%"></i></div><p class="consigna">'+consigna+'</p><div class="notas-t"><table><thead><tr><th></th>'+M[0].map((_,j)=>"<th>P"+(j+1)+"</th>").join("")+"</tr></thead><tbody>"+
+      M.map((f,i)=>"<tr><th>Est. "+(i+1)+"</th>"+f.map((v,j)=>'<td class="n"><button type="button" data-i="'+i+'" data-j="'+j+'" aria-label="Est. '+(i+1)+', P'+(j+1)+'">'+v+"</button></td>").join("")+"</tr>").join("")+'</tbody></table></div><p class="ayuda" id="msg" aria-live="polite">Toca cualquier nota de la fila o columna que quieras marcar.</p></div>';
+    cont.innerHTML=h;let hecho=false;
+    $$("td button",cont).forEach(b=>b.addEventListener("click",()=>{
+      if(hecho)return;hecho=true;const i=+b.dataset.i,j=+b.dataset.j;
+      const bien=tipo==="fila"?i===k:j===k;
+      $$("td button",cont).forEach(x=>{const xi=+x.dataset.i,xj=+x.dataset.j;const td=x.parentElement;if(tipo==="fila"?xi===k:xj===k)td.classList.add("on");else if(!bien&&(tipo==="fila"?xi===i:xj===j))td.classList.add("tin");});
+      if(bien)pts++;
+      const vals=tipo==="fila"?M[k]:M.map(f=>f[k]);
+      $("#msg",cont).innerHTML=(bien?"Bien. ":"No. ")+(tipo==="fila"?"El Est. "+(k+1)+" es la fila "+k+": ":"La P"+(k+1)+" es la columna "+k+": ")+"("+vals.join(" + ")+") / "+vals.length+" = "+(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2)+". "+(tipo==="fila"?"El for de afuera recorre filas.":"El for de afuera recorre columnas.");
+      const b2=document.createElement("button");b2.type="button";b2.className="btn";b2.textContent=r+1<R?"Siguiente":"Ver resultado";$(".juego",cont).appendChild(b2);b2.focus({preventScroll:true});b2.addEventListener("click",()=>{r++;ronda();});
+    }));
+  }
+  ronda();
+}
+
+/* ---------- examen ---------- */
+function verExamen(){
+  const E=DATA.examen;const prev=S.examen;
+  let h='<div class="intro"><h2>Examen</h2><p>'+E.length+' preguntas sobre las dos clases, una a la vez. Al final ves tu nota sobre 20 y qué repasar. Hazlo después de las lecciones.</p></div><div id="ex"></div>';
+  h+='<section class="ejercicios" aria-labelledby="ej-t"><div class="intro" style="margin:0"><h2 id="ej-t">Ejercicios para la computadora</h2><p>Como en el quiz: hazlos en VS Code. Cada uno dice qué debe salir en la pantalla, trae una pista y la respuesta completa.</p></div>';
+  DATA.ejercicios.forEach((e,k)=>{
+    h+='<article class="ejer"><span class="fu">'+esc(e.fuente)+"</span><h3>"+esc(e.titulo)+"</h3><p>"+fmt(e.enunciado)+'</p><span class="zona-t">Salida esperada</span><pre class="esperada">'+esc(e.salida)+"</pre><details><summary>Ver una pista</summary><div><p>"+fmt(e.pista)+"</p></div></details><details><summary>Ver la respuesta</summary><div>"+codigo(e.solucion,true)+'<button type="button" class="btn sec chico copiar" data-cod="'+k+'">Copiar el código</button></div></details></article>';
+  });
+  h+="</section>";
+  $("#vista").innerHTML=h;
+  $$("[data-cod]").forEach(b=>b.addEventListener("click",()=>copiar(DATA.ejercicios[+b.dataset.cod].solucion,b)));
+  inicioExamen(prev);
+}
+function inicioExamen(prev){
+  const ex=$("#ex");
+  ex.innerHTML='<div class="final"><p>'+(prev?"Tu última nota: <b>"+prev.nota+"/20</b> ("+prev.bien+" de "+prev.total+" correctas).":"Necesitas unos 15 minutos.")+'</p><button type="button" class="btn" id="ex-ini">'+(prev?"Hacer el examen otra vez":"Empezar el examen")+"</button></div>";
+  $("#ex-ini").addEventListener("click",()=>correrExamen());
+}
+function correrExamen(){
+  const E=DATA.examen,ex=$("#ex");let k=0,bien=0;const fallas=[];
+  function una(){
+    if(k>=E.length){
+      const nota=Math.round(bien/E.length*20);S.examen={nota,bien,total:E.length};guardar();
+      ex.innerHTML='<div class="final"><span class="grande">'+nota+'<small> / 20</small></span><p>'+bien+" de "+E.length+" correctas. "+(nota>=18?"Excelente: estás lista para el parcial.":nota>=14?"Bien. Repasa las que fallaste.":nota>=10?"Aprobado, pero repasa las lecciones de lo que fallaste.":"Repasa las lecciones y vuelve a intentarlo.")+"</p>"+
+        (fallas.length?'<p><b>Para repasar:</b></p><ul style="margin:0;padding-left:1.15em">'+fallas.map(f=>"<li>"+fmt(f)+"</li>").join("")+"</ul>":"")+
+        '<div class="fila-ctrl"><button type="button" class="btn" id="ex-otra">Repetir el examen</button><button type="button" class="btn sec" data-ir="aprende">Ir a las lecciones</button></div></div>';
+      $("#ex-otra").addEventListener("click",correrExamen);ex.scrollIntoView({behavior:"smooth",block:"start"});return;
+    }
+    ex.innerHTML='<div class="juego"><div class="marcador"><span class="pill">Pregunta '+(k+1)+" de "+E.length+'</span><span class="pill esp">Correctas: '+bien+'</span></div><div class="barra"><i style="width:'+(k/E.length*100)+'%"></i></div><div id="ex-q" style="width:100%;display:grid"></div></div>';
+    const q=E[k];
+    pregunta(q,$("#ex-q"),(ok,box)=>{
+      if(ok)bien++;else fallas.push(q.q==="¿Qué aparece en la pantalla?"?"Pregunta "+(k+1)+": predecir la salida de un código.":"Pregunta "+(k+1)+": "+q.q);
+      const b=document.createElement("button");b.type="button";b.className="btn";b.textContent=k+1<E.length?"Siguiente pregunta":"Ver mi nota";box.appendChild(b);b.focus({preventScroll:true});
+      b.addEventListener("click",()=>{k++;una();ex.scrollIntoView({block:"start"});});
+    });
+  }
+  una();
+}
+
+/* ---------- navegación ---------- */
+const VISTAS=["aprende","juegos","examen"];
+function ir(v){
+  if(!VISTAS.includes(v))v="aprende";
+  limpiar();
+  $$(".tabs button").forEach(b=>b.setAttribute("aria-current",b.dataset.ir===v?"page":"false"));
+  ({aprende:verAprende,juegos:verJuegos,examen:verExamen})[v]();
+  try{if(location.hash!=="#"+v)history.replaceState(null,"","#"+v);}catch(e){}
+}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-ir]");if(!b)return;e.preventDefault();ir(b.dataset.ir);window.scrollTo({top:0});});
+window.addEventListener("hashchange",()=>{const v=(location.hash||"").replace("#","");if(VISTAS.includes(v))ir(v);});
+ir((location.hash||"").replace("#",""));
+})();
+</script>
+
+</body>
+</html>
